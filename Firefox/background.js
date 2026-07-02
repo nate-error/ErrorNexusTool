@@ -219,24 +219,43 @@ async function extractMetadata(buffer,url){
 // Check alternate URL endings
 // =======================
 async function checkAlternateURLs(originalUrl){
-    const endings=[".html",".htm",".css",".js",".txt",".json",".png",".jpg",".gif",".webp"];
-    let base=originalUrl.replace(/\.\w+$/,"");
-    for(let ext of endings){
-        let testUrl=base+ext;
-        
-        if (testUrl === originalUrl) continue;
-
-        try{
-            let response=await fetch(testUrl,{method:"HEAD"});
-            if(response.ok){
-                sendToContent(`Variant found: <a href="${testUrl}" target="_blank" style="color:#4af;">${testUrl}</a>`, "found");
-            }else
-            {
-                sendToContent(`Variant not found: ${testUrl} (status ${response.status})`, "notfound")
-            }
-        }catch(e){
-            sendToContent(`Error checking variant ${testUrl}: ${e}`, "error");
+    try {
+        const fileUrl = browserAPI.runtime.getURL("extensions.txt");
+        const responseFile = await fetch(fileUrl);
+        if (!responseFile.ok) {
+            sendToContent(`Failed to load extension.txt (Status ${responseFile.status})`, "error");
+            return;
         }
+        
+        const rawText = await responseFile.text();
+        const endings = rawText.split(/\r?\n/)
+            .map(line => line.trim())
+            .filter(line => line.length > 0)
+            .map(ext => "." + ext);
+
+        let base = originalUrl.replace(/\.\w+$/, "");
+        
+        const checks = endings.map(async (ext) => {
+            let testUrl = base + ext;
+            if (testUrl === originalUrl) return;
+
+            try {
+                let response = await fetch(testUrl, { method: "HEAD" });
+                if(response.ok){
+                    sendToContent(`Variant found: <a href="${testUrl}" target="_blank" style="color:#4af;">${testUrl}</a>`, "found");
+                } else {
+                    sendToContent(`Variant not found: ${testUrl} (status ${response.status})`, "notfound");
+                }
+            } catch(e) {
+                sendToContent(`Error checking variant ${testUrl}: ${e}`, "error");
+            }
+        });
+
+        // Run all at once (hopefully there won't be problems with 429)
+        await Promise.all(checks);
+
+    } catch(e) {
+        sendToContent(`Error processing extension.txt: ${e}`, "error");
     }
 }
 

@@ -123,7 +123,7 @@ const browserAPI = typeof browser !== "undefined" ? browser : chrome;
 // =======================
 (function() {
     let html = document.documentElement.innerHTML;
-    let matches = [...html.matchAll(/([a-zA-Z0-9_\-\/]+)\.(png|jpg|gif)/gi)];
+    let matches = [...html.matchAll(/([a-zA-Z0-9_\-]+)\.(png|jpg|gif)/gi)];
     let baseNames = [...new Set(matches.map(m => m[1]))];
 
     window.__addNexusLog("Found image bases: " + JSON.stringify(baseNames));
