@@ -1,0 +1,28 @@
+{
+  "manifest_version": 2,
+  "name": "Error Nexus Tools",
+  "version": "1.2",
+  "description": "Scan images, check URLs, extract EXIF and EOF metadata directly on webpages.",
+  "permissions": [
+    "tabs",
+    "activeTab",
+    "*://*.neocities.org/*", "*://*.nekoweb.org/*"
+  ],
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.neocities.org/*", "*://*.nekoweb.org/*"],
+      "js": ["content.js"]
+    }
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "error-nexus-tools-1@example.com",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
+    }
+  }
+}
