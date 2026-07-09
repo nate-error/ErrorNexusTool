@@ -57,7 +57,7 @@ sass
 scss
 sf2
 svg
-text
+txt
 toml
 ts
 tsv
