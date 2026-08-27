@@ -32,3 +32,6 @@ To specify which websites the extension should run on:
    - **Chrome:** Right-click the extension icon -> **Options**.
 2. Enter the domain hostnames (one per line, e.g., `nekoweb.org`, `example.com`).
 3. Click **Save Settings**.
+
+>[!WARNING]
+> NO https:// or trailing "/"
