@@ -1,9 +1,24 @@
 const browserAPI = typeof browser !== "undefined" ? browser : chrome;
 
-// =======================
-// CREATE FLOATING PANEL
-// =======================
-(function() {
+// Default allowed sites if none are set in storage yet
+const DEFAULT_ALLOWED_SITES = ["nekoweb.org"];
+
+function isDomainAllowed(allowedSites) {
+    const currentHost = window.location.hostname.toLowerCase();
+    return allowedSites.some(site => {
+        const cleanSite = site.trim().toLowerCase();
+        return cleanSite && (currentHost === cleanSite || currentHost.endsWith("." + cleanSite));
+    });
+}
+
+// Check storage before initializing content script logic
+browserAPI.storage.sync.get({ allowedSites: DEFAULT_ALLOWED_SITES }, (result) => {
+    if (!isDomainAllowed(result.allowedSites)) {
+        return; // Stop execution if current website isn't allowed
+    }
+
+  
+  // CREATE FLOATING PANEL
     function createPanel() {
         let hideNotFound = true;
 
@@ -28,16 +43,14 @@ const browserAPI = typeof browser !== "undefined" ? browser : chrome;
         const header = document.createElement("div");
         header.innerHTML = "<b>Error Nexus Tools</b><br>Scanning...";
         panel.appendChild(header);
-        
 
-        // Hide/show "notfound" button
         const toggleButton = document.createElement("button");
         toggleButton.textContent = "Show Not Found";
         Object.assign(toggleButton.style, {
-            position: "fixed", // float above all content
+            position: "fixed",
             top: "10px",
             right: "10px",
-            zIndex: "1000000", // make sure it's above everything
+            zIndex: "1000000",
             fontSize: "12px",
             padding: "4px 8px",
             cursor: "pointer",
@@ -56,11 +69,8 @@ const browserAPI = typeof browser !== "undefined" ? browser : chrome;
             });
         };
 
-        // Append to body
         document.body.appendChild(toggleButton);
 
-        
-        // Log container
         const logContainer = document.createElement("div");
         logContainer.style.textAlign = "right";
         logContainer.style.wordBreak = "break-word";
@@ -70,7 +80,6 @@ const browserAPI = typeof browser !== "undefined" ? browser : chrome;
             const el = document.createElement("div");
             el.dataset.level = level;
 
-            // styling
             el.style.borderTop = "1px solid #555";
             el.style.marginTop = "4px";
             el.style.paddingTop = "2px";
@@ -78,13 +87,11 @@ const browserAPI = typeof browser !== "undefined" ? browser : chrome;
             el.style.fontFamily = "monospace";
             el.style.color = color;
             el.style.background = bg;
-            el.style.paddingLeft = "4px"; // optional for readability
+            el.style.paddingLeft = "4px";
 
-            // parse limited HTML manually if you want to allow <a> and <b>
-            // for plain text logs, just append a text node
             const parser = new DOMParser();
             const doc = parser.parseFromString(msgText, "text/html");
-            
+
             doc.body.childNodes.forEach(node => {
                 if (node.nodeName === "A") {
                     const a = document.createElement("a");
@@ -115,31 +122,25 @@ const browserAPI = typeof browser !== "undefined" ? browser : chrome;
 
     if (document.body) createPanel();
     else document.addEventListener("DOMContentLoaded", createPanel);
-})();
 
-
-// =======================
-// SCAN HTML FOR IMAGE BASE NAMES
-// =======================
-(function() {
+    
+    // SCAN HTML FOR IMAGE BASE NAMES
     let html = document.documentElement.innerHTML;
     let matches = [...html.matchAll(/([a-zA-Z0-9_\-]+)\.(png|jpg|gif)/gi)];
     let baseNames = [...new Set(matches.map(m => m[1]))];
 
     window.__addNexusLog("Found image bases: " + JSON.stringify(baseNames));
 
-    // Send base names to background script
     browserAPI.runtime.sendMessage({
         type: "imageNames",
         data: baseNames
     });
-})();
+});
 
-// =======================
+
 // RECEIVE LOG MESSAGES FROM BACKGROUND
-// =======================
 browserAPI.runtime.onMessage.addListener((msg) => {
-    if (msg.type === "log") {
+    if (msg.type === "log" && window.__addNexusLog) {
         window.__addNexusLog(msg.msg, msg.level, msg.color, msg.bg);
     }
 });

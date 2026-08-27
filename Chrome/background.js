@@ -2,9 +2,8 @@ const browserAPI = typeof browser !== "undefined" ? browser : chrome;
 
 CURRENT_TAB_ID = null;
 
-// =======================
+
 // Helper to send logs to content script
-// =======================
 function sendToContent(msg, level="info", color="#4af", bg="#111") {
     if (!CURRENT_TAB_ID) return;
 
@@ -17,9 +16,8 @@ function sendToContent(msg, level="info", color="#4af", bg="#111") {
     });
 }
 
-// =======================
+
 // Minimal EXIF / EOF Parser
-// =======================
 function dv(buf) { return new DataView(buf); }
 
 function parseJPEGEXIF(buffer) {
@@ -215,15 +213,14 @@ async function extractMetadata(buffer,url){
     return meta;
 }
 
-// =======================
+
 // Check alternate URL endings
-// =======================
 async function checkAlternateURLs(originalUrl){
     try {
         const fileUrl = browserAPI.runtime.getURL("extensions.txt");
         const responseFile = await fetch(fileUrl);
         if (!responseFile.ok) {
-            sendToContent(`Failed to load extension.txt (Status ${responseFile.status})`, "error");
+            sendToContent(`Failed to load extension.txt (Status ${responseFile.status})`, "error"); 
             return;
         }
         
@@ -259,9 +256,8 @@ async function checkAlternateURLs(originalUrl){
     }
 }
 
-// =======================
+
 // Fetch images and extract metadata
-// =======================
 async function checkImages(baseNames,pageUrl){
     const exts = ["png","jpg","gif","webp"];
     for(let base of baseNames){
@@ -294,9 +290,8 @@ async function checkImages(baseNames,pageUrl){
     }
 }
 
-// =======================
+
 // Listen for messages from content script
-// =======================
 browserAPI.runtime.onMessage.addListener(async (msg, sender) => {
     if (sender.tab?.id) {
         CURRENT_TAB_ID = sender.tab.id;
