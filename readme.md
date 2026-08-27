@@ -14,7 +14,7 @@ A browser extension that automates scanning images, testing alternate URLs, and 
 ### FIREFOX (Normal Load)
 1. Open `about:addons`
 2. Open the parameters and select **Install Addon From File**
-3. Select the .xpi file (In release, coming soon)
+3. Select the .xpi file `https://addons.mozilla.org/firefox/downloads/file/4987167/3f6378a755d64f35801a-1.4.xpi`
 
 ### Chrome / Edge / Brave
 1. Open `chrome://extensions` (or `edge://extensions`)
