@@ -115,25 +115,32 @@ function createPanel(state, onSave) {
     const host = document.createElement("div");
     host.id = "errorNexusHost";
     const root = host.attachShadow({ mode: "closed" });
-    root.innerHTML = `
-        <style>${PANEL_CSS}</style>
-        <div class="panel">
-            <div class="bar">
-                <span class="title">Error Nexus Tools</span>
-                <button class="toggle"></button>
-                <button class="reset" title="Reset position and size">&#8634;</button>
-                <button class="gear" title="Settings">&#9881;</button>
-            </div>
-            <div class="logs"></div>
-        </div>
-    `;
-    document.documentElement.appendChild(host);
 
-    const $ = (sel) => root.querySelector(sel);
-    const panel = $(".panel");
-    const bar = $(".bar");
-    const logs = $(".logs");
-    const toggle = $(".toggle");
+    const el = (tag, className, text) => {
+        const node = document.createElement(tag);
+        if (className) node.className = className;
+        if (text) node.textContent = text;
+        return node;
+    };
+
+    const style = el("style");
+    style.textContent = PANEL_CSS;
+
+    const toggle = el("button", "toggle");
+    const resetBtn = el("button", "reset", "\u21BB");
+    resetBtn.title = "Reset position and size";
+    const gear = el("button", "gear", "\u2699");
+    gear.title = "Settings";
+
+    const bar = el("div", "bar");
+    bar.append(el("span", "title", "Error Nexus Tools"), toggle, resetBtn, gear);
+
+    const logs = el("div", "logs");
+    const panel = el("div", "panel");
+    panel.append(bar, logs);
+
+    root.append(style, panel);
+    document.documentElement.appendChild(host);
 
     let hideNotFound = !!state.hideNotFound;
     let hiddenCount = 0;
