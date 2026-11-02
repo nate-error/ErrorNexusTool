@@ -25,13 +25,17 @@ A browser extension that automates scanning images, testing alternate URLs, and 
 
 ## Configuration
 
+You can resize and move the window, and reset its position with the tiny arrow logo (top bar). In case you get the window stuck somewhere, you can reset the window from the options menu.
+
 To specify which websites the extension should run on:
 
 1. Open the **Options** page:
+   - **Menu** Press the tiny cogwheel in the top right corner (The button next to it resets both the size and position). _**OR**_
    - **Firefox:** Go to `about:addons` -> **Extensions** -> **Error Nexus Tools** -> **Preferences**.
    - **Chrome:** Right-click the extension icon -> **Options**.
 2. Enter the domain hostnames (one per line, e.g., `nekoweb.org`, `example.com`).
 3. Click **Save Settings**.
 
->[!WARNING]
+>[!WARN
+You can also modify the list of extensions to try. They should not include the "." at the beggining.ING]
 > NO https:// or trailing "/"
