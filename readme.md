@@ -36,6 +36,6 @@ To specify which websites the extension should run on:
 2. Enter the domain hostnames (one per line, e.g., `nekoweb.org`, `example.com`).
 3. Click **Save Settings**.
 
->[!WARN
+>[!WARN]
 You can also modify the list of extensions to try. They should not include the "." at the beggining.ING]
 > NO https:// or trailing "/"
