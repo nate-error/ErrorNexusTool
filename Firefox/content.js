@@ -230,8 +230,8 @@ function createPanel(state, onSave) {
         save();
     });
 
-    $(".reset").addEventListener("click", reset);
-    $(".gear").addEventListener("click", () => browserAPI.runtime.sendMessage({ type: "openOptions" }));
+    resetBtn.addEventListener("click", reset);
+    gear.addEventListener("click", () => browserAPI.runtime.sendMessage({ type: "openOptions" }));
 
     // Drag by the header bar
     bar.addEventListener("pointerdown", (e) => {
