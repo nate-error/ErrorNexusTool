@@ -1,23 +1,24 @@
+
 @echo off
 setlocal
 cd /d "%~dp0"
 
 set "OUTPUT_DIR=out"
 
-for %%T in (chrome firefox) do (
-    if exist "%OUTPUT_DIR%\%%T" rmdir /s /q "%OUTPUT_DIR%\%%T"
-    mkdir "%OUTPUT_DIR%\%%T"
-    xcopy "src" "%OUTPUT_DIR%\%%T" /e /i /q /y >nul
-    copy /y "%%T\manifest.json" "%OUTPUT_DIR%\%%T\manifest.json" >nul
-    echo Built %OUTPUT_DIR%\%%T
-)
+REM Build Chrome
+if exist "%OUTPUT_DIR%\chrome" rmdir /s /q "%OUTPUT_DIR%\chrome"
+mkdir "%OUTPUT_DIR%\chrome"
+xcopy "src" "%OUTPUT_DIR%\chrome" /e /i /q /y >nul
+copy /y "chrome\manifest.json" "%OUTPUT_DIR%\chrome\manifest.json" >nul
 
-echo Zipping...
+echo Built %OUTPUT_DIR%\chrome
 
-for %%T in (chrome firefox) do (
-    if exist "%OUTPUT_DIR%\%%T.zip" del "%OUTPUT_DIR%\%%T.zip"
-    tar -a -c -f "%OUTPUT_DIR%\%%T.zip" -C "%OUTPUT_DIR%\%%T" *
-)
+REM Build Firefox (preserve existing out\firefox folder)
+if not exist "%OUTPUT_DIR%\firefox" mkdir "%OUTPUT_DIR%\firefox"
+xcopy "src" "%OUTPUT_DIR%\firefox" /e /i /q /y >nul
+copy /y "firefox\manifest.json" "%OUTPUT_DIR%\firefox\manifest.json" >nul
+
+echo Built %OUTPUT_DIR%\firefox
 
 echo.
 echo Done.
