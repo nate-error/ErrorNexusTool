@@ -9,7 +9,7 @@ A browser extension that automates scanning images, testing alternate URLs, and 
 ### Firefox (Temporary Load)
 1. Open `about:debugging#/runtime-this-firefox`
 2. Open the parameters and select **Load Temporary Add-on...**
-3. Select `manifest.json` from the project folder
+3. Select `manifest.json` from the project folder (out/firefox/)
 
 ### FIREFOX (Normal Load)
 1. Open `about:addons`
@@ -19,7 +19,7 @@ A browser extension that automates scanning images, testing alternate URLs, and 
 ### Chrome / Edge / Brave
 1. Open `chrome://extensions` (or `edge://extensions`)
 2. Enable **Developer mode** in the top right corner
-3. Click **Load unpacked** and select the extension
+3. Click **Load unpacked** and select the extension (out/chrome/)
 
 ---
 
