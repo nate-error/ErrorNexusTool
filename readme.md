@@ -14,7 +14,7 @@ A browser extension that automates scanning images, testing alternate URLs, and 
 ### FIREFOX (Normal Load)
 1. Open `about:addons`
 2. Open the parameters and select **Install Addon From File**
-3. Select the .xpi file `https://addons.mozilla.org/firefox/downloads/file/5200642/errornexustools-1.6.xpi`
+3. I 'm trying to figure this one out
 
 ### Chrome / Edge / Brave
 1. Open `chrome://extensions` (or `edge://extensions`)
