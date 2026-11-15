@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "Error Nexus Tools",
+  "version": "1.7",
+  "description": "Scan images, check URLs, extract EXIF and EOF metadata directly on webpages.",
+
+  "permissions": [
+    "tabs",
+    "storage",
+    "scripting"
+  ],
+
+  "host_permissions": ["<all_urls>"],
+
+  "background": { "service_worker": "background/sw.js" },
+
+  "options_ui": { "page": "options/options.html", "open_in_tab": true },
+
+  "action": {},
+
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "error-nexus-tools-1@example.com"
+    }
+  }
+}

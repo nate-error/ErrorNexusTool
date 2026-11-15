@@ -1,29 +1,3 @@
-const browserAPI = typeof browser !== "undefined" ? browser : chrome;
-const IS_FIREFOX = typeof browser !== "undefined";
-
-const storageGet = (area, defaults) => IS_FIREFOX ? browser.storage[area].get(defaults) : new Promise((resolve) => chrome.storage[area].get(defaults, resolve));
-
-const IMAGE_EXTS = ["png", "jpg", "gif", "webp"];
-
-// Logging (background -> content script of the given tab)
-// level: info | found | notfound | error | meta | warn | bad
-function sendLog(tabId, text, level = "info", href = null) {
-    try {
-        const p = browserAPI.tabs.sendMessage(tabId, { type: "log", text, level, href });
-        if (p && p.catch) p.catch(() => {});
-    } catch (e) {
-        // tab closed / content script not there
-    }
-}
-
-function logFailure(tabId, kind, url, status) {
-    if (status === 404) {
-        sendLog(tabId, `${kind} not found: ${url} (status 404)`, "notfound");
-    } else {
-        sendLog(tabId, `${kind} unavailable: ${url} (status ${status})`, "warn");
-    }
-}
-
 // Minimal metadata parsers
 const fourCC = (view, off) =>
     String.fromCharCode(
@@ -43,6 +17,30 @@ function readString(view, start) {
     return out;
 }
 
+const TIFF_TAGS = {
+    0x010f: "Make",
+    0x0110: "Model",
+    0x0132: "DateTime",
+    0x9c9b: "XPTitle",
+    0x9c9c: "XPComment",
+    0x9c9d: "XPAuthor",
+    0x9c9e: "XPKeywords",
+    0x9c9f: "XPSubject",
+};
+const XP_TAGS = new Set([0x9c9b, 0x9c9c, 0x9c9d, 0x9c9e, 0x9c9f]);
+
+// XP* tags are always UTF-16LE, regardless of the TIFF byte order
+function readUTF16LE(view, start, byteLen) {
+    let out = "";
+    const end = Math.min(start + byteLen, view.byteLength);
+    for (let i = start; i + 1 < end; i += 2) {
+        const c = view.getUint16(i, true);
+        if (c === 0) break;
+        out += String.fromCharCode(c);
+    }
+    return out;
+}
+
 // `buffer` must start at the TIFF header ("II*\0" or "MM\0*")
 function parseTIFF(buffer) {
     try {
@@ -52,18 +50,20 @@ function parseTIFF(buffer) {
         const get32 = (o) => view.getUint32(o, little);
         if (get16(2) !== 0x002a) return null;
 
-        const names = { 0x010f: "Make", 0x0110: "Model", 0x0132: "DateTime" };
         const ifd = get32(4);
         const count = get16(ifd);
         const tags = {};
 
         for (let i = 0; i < count; i++) {
             const base = ifd + 2 + i * 12;
-            const name = names[get16(base)];
+            const tag = get16(base);
+            const name = TIFF_TAGS[tag];
             if (!name) continue;
-            const len = get32(base + 4);
+            const len = get32(base + 4); // for XP tags this is a byte count
             const start = len <= 4 ? base + 8 : get32(base + 8); // short values are stored inline
-            tags[name] = readString(view, start);
+            tags[name] = XP_TAGS.has(tag)
+                ? readUTF16LE(view, start, len)
+                : readString(view, start);
         }
         return tags;
     } catch (e) {
@@ -199,86 +199,3 @@ function extractMetadata(buffer, url) {
             return { exif: {}, eof: true };
     }
 }
-
-// Variant extensions (user list in storage, bundled file as default)
-const normalizeExtensions = (list) => [
-    ...new Set(list.map((s) => s.trim().replace(/^\./, "").toLowerCase()).filter(Boolean)),
-];
-
-async function getVariantExtensions() {
-    const res = await fetch(browserAPI.runtime.getURL("extensions.txt"));
-    if (!res.ok) throw new Error(`extensions.txt status ${res.status}`);
-    const bundled = normalizeExtensions((await res.text()).split(/\r?\n/));
-
-    const { extAdded, extRemoved } = await storageGet("local", { extAdded: [], extRemoved: [] });
-    return normalizeExtensions([...bundled.filter((e) => !extRemoved.includes(e)), ...extAdded]);
-}
-
-async function checkAlternateURLs(tabId, originalUrl) {
-    try {
-        const endings = await getVariantExtensions();
-        const base = originalUrl.replace(/\.\w+$/, "");
-
-        await Promise.all(
-            endings.map(async (ext) => {
-                const testUrl = `${base}.${ext}`;
-                if (testUrl === originalUrl) return;
-
-                try {
-                    const response = await fetch(testUrl, { method: "HEAD" });
-                    if (response.ok)
-                        sendLog(tabId, "Variant found: ", "found", testUrl);
-                    else
-                        logFailure(tabId, "Variant", testUrl, response.status);
-                    
-                } catch (e) {
-                    sendLog(tabId, `Error checking variant ${testUrl}: ${e}`, "error");
-                }
-            }),
-        );
-    } catch (e) {
-        sendLog(tabId, `Error loading extension list: ${e}`, "error");
-    }
-}
-
-// Image scan
-async function checkImages(tabId, baseNames, pageUrl) {
-    for (const base of baseNames) {
-        for (const ext of IMAGE_EXTS) {
-            const full = new URL(`${base}.${ext}`, pageUrl).href;
-
-            try {
-                const res = await fetch(full);
-                if (!res.ok) {
-                    logFailure(tabId, "Image", full, res.status);
-                    continue;
-                }
-
-                const meta = extractMetadata(await res.arrayBuffer(), full);
-                sendLog(tabId, "Image found: ", "found", full);
-
-                if (Object.keys(meta.exif || {}).length)
-                    sendLog(tabId, "EXIF: " + JSON.stringify(meta.exif), "meta");
-                else sendLog(tabId, "No EXIF data", "warn");
-
-                sendLog(tabId, "EOF OK: " + meta.eof, meta.eof ? "found" : "bad");
-            } catch (e) {
-                sendLog(tabId, `Error fetching/parsing ${full}: ${e}`, "error");
-            }
-        }
-    }
-}
-
-// Messages from the content script
-browserAPI.runtime.onMessage.addListener((msg, sender) => {
-    if (msg.type === "openOptions") {
-        browserAPI.runtime.openOptionsPage();
-        return;
-    }
-
-    if (msg.type === "imageNames" && sender.tab) {
-        const { id: tabId, url } = sender.tab;
-        checkAlternateURLs(tabId, url);
-        checkImages(tabId, msg.data, url);
-    }
-});

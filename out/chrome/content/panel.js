@@ -1,115 +1,3 @@
-const browserAPI = typeof browser !== "undefined" ? browser : chrome;
-const IS_FIREFOX = typeof browser !== "undefined";
-
-const DEFAULT_ALLOWED_SITES = ["nekoweb.org"];
-const DEFAULT_PANEL = { left: null, top: null, width: 350, height: 300, hideNotFound: true };
-const MIN_W = 240;
-const MIN_H = 80;
-const MARGIN = 10;
-
-const storageGet = (area, defaults) =>
-    IS_FIREFOX ? browser.storage[area].get(defaults) : new Promise((resolve) => chrome.storage[area].get(defaults, resolve));
-
-const storageSet = (area, items) =>
-    IS_FIREFOX ? browser.storage[area].set(items) : new Promise((resolve) => chrome.storage[area].set(items, resolve));
-
-function isDomainAllowed(allowedSites) {
-    const host = window.location.hostname.toLowerCase();
-    return allowedSites.some((site) => {
-        const s = site.trim().toLowerCase();
-        return s && (host === s || host.endsWith("." + s));
-    });
-}
-
-const PANEL_CSS = `
-    :host {
-        all: initial;
-    }
-    .panel {
-        position: fixed;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        resize: both;
-        box-sizing: border-box;
-        min-width: ${MIN_W}px;
-        min-height: ${MIN_H}px;
-        max-width: 100vw;
-        max-height: 100vh;
-        background: rgba(0, 0, 0, 0.85);
-        color: #fff;
-        font: 12px monospace;
-        border: 1px solid #333;
-        border-radius: 8px;
-        z-index: 2147483647;
-    }
-    .bar {
-        flex: none;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        padding: 6px 8px;
-        background: rgba(255, 255, 255, 0.08);
-        cursor: move;
-        user-select: none;
-        touch-action: none;
-    }
-    .title {
-        flex: 1;
-        font-weight: bold;
-    }
-    button {
-        font: 11px monospace;
-        padding: 3px 7px;
-        cursor: pointer;
-        color: #fff;
-        background: rgba(0, 0, 0, 0.6);
-        border: 1px solid #555;
-        border-radius: 4px;
-    }
-    button:hover {
-        background: #222;
-    }
-    .logs {
-        flex: 1;
-        min-height: 0;
-        overflow-y: auto;
-        padding: 4px 10px 8px;
-    }
-    .log {
-        margin-top: 4px;
-        padding: 2px 0 0 4px;
-        background: #111;
-        border-top: 1px solid #555;
-        word-break: break-word;
-    }
-    .log a {
-        color: #4af;
-    }
-    .info,
-    .notfound {
-        color: #4af;
-    }
-    .found {
-        color: #0f0;
-    }
-    .meta {
-        color: #0af;
-    }
-    .warn {
-        color: #aa0;
-    }
-    .bad {
-        color: #f00;
-    }
-    .error {
-        color: #f66;
-    }
-    .hide-notfound .log.notfound {
-        display: none;
-    }
-`;
-
 // Floating panel inside a shadow root so page CSS can't interfere
 function createPanel(state, onSave) {
     const host = document.createElement("div");
@@ -118,8 +6,12 @@ function createPanel(state, onSave) {
 
     const el = (tag, className, text) => {
         const node = document.createElement(tag);
-        if (className) node.className = className;
-        if (text) node.textContent = text;
+        if (className)
+            node.className = className;
+
+        if (text)
+            node.textContent = text;
+
         return node;
     };
 
@@ -135,9 +27,14 @@ function createPanel(state, onSave) {
     const bar = el("div", "bar");
     bar.append(el("span", "title", "Error Nexus Tools"), toggle, resetBtn, gear);
 
+    const spinner = el("div", "spinner off");
+    const statusText = el("span", "statustext", "Idle");
+    const statusRow = el("div", "statusrow");
+    statusRow.append(spinner, statusText);
+
     const logs = el("div", "logs");
     const panel = el("div", "panel");
-    panel.append(bar, logs);
+    panel.append(bar, statusRow, logs);
 
     root.append(style, panel);
     document.documentElement.appendChild(host);
@@ -250,6 +147,7 @@ function createPanel(state, onSave) {
             dirty = true;
             save();
         };
+
         bar.addEventListener("pointermove", move);
         bar.addEventListener("pointerup", up);
         bar.addEventListener("pointercancel", up);
@@ -294,31 +192,10 @@ function createPanel(state, onSave) {
         logs.scrollTop = logs.scrollHeight;
     }
 
-    return { addLog, reset };
+    function setProgress({ active, done, total }) {
+        spinner.classList.toggle("off", !active);
+        statusText.textContent = active ? total ? `Searching\u2026 ${done}/${total}` : "Searching\u2026" : `Done (${done} URLs checked)`;
+    }
+
+    return { addLog, reset, setProgress };
 }
-
-(async function init() {
-    const { allowedSites } = await storageGet("sync", { allowedSites: DEFAULT_ALLOWED_SITES });
-    if (!isDomainAllowed(allowedSites)) return;
-
-    const { panelState } = await storageGet("local", { panelState: {} });
-    const ui = createPanel({ ...DEFAULT_PANEL, ...panelState }, (state) =>
-        storageSet("local", { panelState: state }),
-    );
-
-    browserAPI.runtime.onMessage.addListener((msg) => {
-        if (msg.type === "log") ui.addLog(msg);
-    });
-
-    // The options page clears panelState to reset the panel
-    browserAPI.storage.onChanged.addListener((changes, area) => {
-        if (area === "local" && changes.panelState && !changes.panelState.newValue) ui.reset();
-    });
-
-    const html = document.documentElement.innerHTML;
-    const matches = [...html.matchAll(/([a-zA-Z0-9_\-]+)\.(png|jpg|gif)/gi)];
-    const baseNames = [...new Set(matches.map((m) => m[1]))];
-
-    ui.addLog({ text: "Found image bases: " + JSON.stringify(baseNames) });
-    browserAPI.runtime.sendMessage({ type: "imageNames", data: baseNames });
-})();

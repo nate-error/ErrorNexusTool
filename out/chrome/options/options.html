@@ -1,0 +1,76 @@
+ <!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="options.css">
+    <title>Error Nexus Tools - Options</title>
+  </head>
+  <body>
+    <div class="card">
+      <h3>Allowed Domains</h3>
+      <p>Enter hostnames where Error Nexus Tools should run (one per line):</p>
+      <textarea id="sites" placeholder="nekoweb.org&#10;example.com"></textarea>
+
+      <div class="actions">
+        <button id="saveSites">Save Settings</button>
+        <div id="statusSites" class="status"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Variant Extensions</h3>
+      <p>
+        File extensions tried when looking for variants of the current URL (one
+        per line, without the dot). Leading dots and duplicates are cleaned up
+        on save.
+      </p>
+      <textarea
+        id="extensions"
+        placeholder="png&#10;jpg&#10;txt&#10;zip"
+      ></textarea>
+
+      <div class="actions">
+        <button id="saveExtensions">Save Extensions</button>
+        <button
+          id="resetExtensions"
+          title="Reload the list from the bundled extensions.txt"
+        >
+          Reset to default
+        </button>
+        <div id="statusExtensions" class="status"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Request Delay</h3>
+      <p>
+        Minimum time between requests, in milliseconds. Higher values are
+        gentler on sites but make scans slower (250 ≈ 4 requests per second).
+        Applies right away, even to a scan in progress.
+      </p>
+      <input id="delay" type="number" min="0" max="60000" step="50" />
+
+      <div class="actions">
+        <button id="saveDelay">Save Delay</button>
+        <button id="resetDelay">Reset to default</button>
+        <div id="statusDelay" class="status"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Panel</h3>
+      <p>
+        Put the floating panel back at its default size and position (bottom
+        right) on open tabs.
+      </p>
+
+      <div class="actions">
+        <button id="resetPanel">Reset panel position and size</button>
+        <div id="statusPanel" class="status"></div>
+      </div>
+    </div>
+
+    <script src="../shared/browser.js"></script>
+    <script src="options.js"></script>
+  </body>
+</html>

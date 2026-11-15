@@ -1,24 +1,4 @@
-const browserAPI = typeof browser !== "undefined" ? browser : chrome;
-const IS_FIREFOX = typeof browser !== "undefined";
-
-const DEFAULT_ALLOWED_SITES = ["nekoweb.org"];
-
-const storageGet = (area, defaults) =>
-    IS_FIREFOX ? browser.storage[area].get(defaults) : new Promise((resolve) => chrome.storage[area].get(defaults, resolve));
-
-const storageSet = (area, items) =>
-    IS_FIREFOX ? browser.storage[area].set(items) : new Promise((resolve) => chrome.storage[area].set(items, resolve));
-
-const storageRemove = (area, keys) =>
-    IS_FIREFOX ? browser.storage[area].remove(keys) : new Promise((resolve) => chrome.storage[area].remove(keys, resolve));
-
 const $ = (id) => document.getElementById(id);
-const toLines = (text) =>
-    text.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
-
-const normalizeExtensions = (list) => [
-    ...new Set(list.map((s) => s.trim().replace(/^\./, "").toLowerCase()).filter(Boolean)),
-];
 
 function flash(el, message) {
     el.textContent = message;
@@ -47,9 +27,33 @@ document.addEventListener("DOMContentLoaded", async () => {
         "\n",
     );
 
+    // delay between requests
+    const { requestDelay } = await storageGet("local", { requestDelay: DEFAULT_DELAY_MS });
+    $("delay").value = requestDelay;
+
+    // save handling
     $("saveSites").addEventListener("click", async () => {
-        await storageSet("sync", { allowedSites: toLines($("sites").value) });
-        flash($("statusSites"), "Settings saved!");
+        const sites = toLines($("sites").value);
+        const origins = sites.map(toMatchPattern).filter(Boolean);
+
+        // grant access to what's in the list (must be the first await after the click)
+        const ok = origins.length ? await permissionsRequest(origins) : true;
+
+        // revoke access to sites that were in the saved list but were removed
+        const { allowedSites: previous } = await storageGet("sync", { allowedSites: DEFAULT_ALLOWED_SITES });
+        const removed = previous.map(toMatchPattern).filter((o) => o && !origins.includes(o));
+        if (removed.length) await permissionsRemove(removed);
+
+        await storageSet("sync", { allowedSites: sites });
+        flash($("statusSites"), ok ? "Settings saved!" : "Saved, but access was denied");
+    });
+    
+    $("saveDelay").addEventListener("click", async () => {
+        const n = Math.round(Number($("delay").value));
+        const value = Number.isFinite(n) && n >= 0 ? Math.min(n, MAX_DELAY_MS) : DEFAULT_DELAY_MS;
+        await storageSet("local", { requestDelay: value });
+        $("delay").value = value;
+        flash($("statusDelay"), "Delay saved!");
     });
 
     $("saveExtensions").addEventListener("click", async () => {
@@ -59,6 +63,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         flash($("statusExtensions"), "Extensions saved!");
     });
 
+    // reset handling
     $("resetPanel").addEventListener("click", async () => {
         await storageRemove("local", "panelState");
         flash($("statusPanel"), "Panel reset!");
@@ -69,4 +74,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         $("extensions").value = (await loadBundledExtensions()).join("\n");
         flash($("statusExtensions"), "Reset to default!");
     });
+
+        $("resetDelay").addEventListener("click", async () => {
+        await storageRemove("local", "requestDelay");
+        $("delay").value = DEFAULT_DELAY_MS;
+        flash($("statusDelay"), "Reset to default!");
+    });
+
 });
