@@ -10,7 +10,7 @@ _If you want to contact me concerning issues or improvements : nathandvd on disc
 
 ### Firefox (Temporary Installation)
 
-1. Open [`about:debugging#/runtime-this-firefox`](about:debugging#/runtime-this-firefox).
+1. Open `about:debugging#/runtime-this-firefox`.
 2. Click **Load Temporary Add-on...**.
 3. Select the `manifest.json` file from the `out/firefox/` project folder.
 
@@ -89,5 +89,5 @@ png
 webp
 gif
 ```
-> [WARNING!]
+> [!IMPORTANT]
 > Do not forget to click **Save Settings** to apply the changes when changing options. Each 
