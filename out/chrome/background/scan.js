@@ -1,29 +1,61 @@
-const IMAGE_EXTS = ["png", "jpg", "jpeg", "gif", "webp"];
-const METADATA_EXTS = new Set(["png", "jpg", "jpeg", "gif", "webp"]);
+const IMAGE_EXTS = ["png", "jpg", "jpeg", "gif", "webp", "ico", "bmp", "avif"];
+const METADATA_EXTS = new Set(IMAGE_EXTS);
 
-// shared by images and image variants: log the find, EXIF and EOF
+// Recently fetched image bytes, so the content script can ask for them without a second request
+const imageCache = new Map(); // url -> { buffer, type }
+function cacheImage(url, buffer, type) {
+    imageCache.delete(url);
+    imageCache.set(url, { buffer, type });
+    while (imageCache.size > 40) imageCache.delete(imageCache.keys().next().value);
+}
+
+function toBase64(buffer) {
+    const bytes = new Uint8Array(buffer);
+    let s = "";
+    for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return btoa(s);
+}
+
+// content script -> "getImage": only same origin URLs on sites the user granted
+async function fetchImageData(tabUrl, url) {
+    const origin = new URL(url).origin;
+    if (origin !== new URL(tabUrl).origin || !(await permissionsContains([origin + "/*"])))
+        return { ok: false, error: "not allowed" };
+
+    let hit = imageCache.get(url);
+    if (!hit) {
+        const res = await fetch(url);
+        if (!res.ok) return { ok: false, error: `status ${res.status}` };
+        hit = { buffer: await res.arrayBuffer(), type: res.headers.get("Content-Type") || "application/octet-stream" };
+        cacheImage(url, hit.buffer, hit.type);
+    }
+
+    return { ok: true, b64: toBase64(hit.buffer), type: hit.type };
+}
+
+// shared by images and image variants: report the find, its metadata and EOF
 // returns false if the response wasn't actually an image
 async function reportImage(scan, kind, url, res) {
     const type = res.headers.get("Content-Type") || "";
     if (!type.startsWith("image/")) {
         // some sites answer 200 with an HTML page for missing files
-        sendLog(scan.tabId, `${kind} found (not an image: ${type || "no content type"}): `, "found", url);
+        sendEntry(scan.tabId, { kind, url, status: res.status, level: "notfound", contentType: type, note: "200 but not an image (soft 404?)" });
         return false;
     }
 
-    const meta = extractMetadata(await res.arrayBuffer(), url);
-    sendLog(scan.tabId, `${kind} found: `, "found", url);
+    const buffer = await res.arrayBuffer();
+    const meta = extractMetadata(buffer, url);
+    cacheImage(url, buffer, type);
 
-    // stringify the metadata
-    if (Object.keys(meta.exif || {}).length) {
-        const lines = Object.entries(meta.exif).map(([k, v]) =>
-            String(v).includes("\n") ? `${k}:\n${v}` : `${k}: ${v}`,
-        );
-
-        sendLog(scan.tabId, "EXIF:\n" + lines.join("\n"), "meta");
-    } else sendLog(scan.tabId, "No EXIF data", "warn");
-
-    sendLog(scan.tabId, "EOF OK: " + meta.eof, meta.eof ? "found" : "bad");
+    sendEntry(scan.tabId, {
+        kind, url, status: res.status, level: "found", contentType: type, size: buffer.byteLength,
+        note: `${meta.eof ? "EOF ok" : "EOF MISSING"} \u00B7 ${Object.keys(meta.exif || {}).length ? "EXIF " + Object.keys(meta.exif).length : "no EXIF"}`,
+    });
+    sendImage(scan.tabId, {
+        url, kind, name: new URL(url).pathname.split("/").pop() || url,
+        contentType: type, size: buffer.byteLength,
+        exif: meta.exif || {}, xmp: meta.xmp || null, eof: meta.eof,
+    });
 
     return true;
 }
@@ -54,7 +86,11 @@ function queueVariants(scan, sourceUrl) {
                 if (isImage)
                     await reportImage(scan, "Variant", url, res);
                 else
-                    sendLog(scan.tabId, "Variant found: ", "found", url);
+                    sendEntry(scan.tabId, {
+                        kind: "Variant", url, status: res.status, level: "found",
+                        contentType: res.headers.get("Content-Type") || "",
+                        size: Number(res.headers.get("Content-Length")) || null,
+                    });
             },
         });
     }
@@ -75,6 +111,7 @@ function queueImage(scan, url) {
     });
 }
 
+// baseNames: absolute URLs without extension (or bare names, resolved against the page)
 async function scanTab(tabId, pageUrl, baseNames) {
     const prev = activeScans.get(tabId);
     if (prev)
@@ -100,6 +137,8 @@ async function scanTab(tabId, pageUrl, baseNames) {
     } catch (e) {
         sendLog(tabId, `Error loading extension list: ${e}`, "error");
     }
+
+    sendLog(tabId, `Scan started: ${baseNames.length} base names, ${scan.endings.length} variant extensions`, "info");
 
     // images first, so they get the full metadata check before variants can claim their URLs
     for (const base of baseNames)

@@ -1,0 +1,97 @@
+/* ---------- Playground sidebar restyle ----------
+   Paste this block at the END of UI_CSS in content/style.js (just before the closing backtick),
+   so it overrides the older .tabs / .pane / .ctl / .row2 / .hint ... rules. */
+
+.pg-side { background: #101013; }
+
+/* tabs: one row, underline on the active one */
+.tabs { flex-wrap: nowrap; gap: 0; padding: 0 6px; background: #131317; border-bottom: 1px solid #26262c; }
+.tabs button {
+    flex: 1; padding: 11px 2px 9px; background: none; border: none; border-radius: 0;
+    border-bottom: 2px solid transparent; color: #8a8a94; font: 11px monospace;
+}
+.tabs button:hover { color: #ddd; background: #18181d; }
+.tabs button.on { color: #fff; background: none; border-bottom-color: #4af; }
+
+.pane { padding: 12px 12px 22px; }
+
+/* cards */
+.sec { margin-bottom: 10px; padding: 11px 12px; background: #15151a; border: 1px solid #25252b; border-radius: 8px; }
+.sec-title { margin-bottom: 10px; font-size: 10px; letter-spacing: .09em; text-transform: uppercase; color: #7c7c88; }
+
+/* label + value on top, slider underneath */
+.ctl {
+    display: grid; grid-template-columns: 1fr auto;
+    grid-template-areas: "label val" "slider slider";
+    gap: 5px 8px; align-items: center; margin: 0 0 12px;
+}
+.ctl:last-child { margin-bottom: 0; }
+.ctl > :nth-child(1) { grid-area: label; color: #b9b9c3; }
+.ctl > :nth-child(2) { grid-area: slider; }
+.ctl > :nth-child(3) { grid-area: val; }
+.ctl .val {
+    min-width: 44px; padding: 1px 7px; text-align: center; cursor: pointer;
+    font: 11px monospace; color: #8a8a94; background: #0d0d10; border: 1px solid #2a2a31; border-radius: 5px;
+}
+.ctl .val:hover { border-color: #4af; }
+.ctl .val.changed { color: #4af; border-color: #1f5a85; }
+
+/* sliders */
+input[type=range] { --p: 0%; -webkit-appearance: none; appearance: none; height: 16px; padding: 0; background: transparent; border: none; cursor: pointer; }
+input[type=range]:focus { outline: none; }
+input[type=range]::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: linear-gradient(to right, #4af var(--p), #2c2c34 var(--p)); }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; margin-top: -5px; border-radius: 50%; background: #e8f4ff; border: 2px solid #4af; box-shadow: 0 1px 4px rgba(0,0,0,.6); }
+input[type=range]::-moz-range-track { height: 4px; border-radius: 2px; background: #2c2c34; }
+input[type=range]::-moz-range-progress { height: 4px; border-radius: 2px; background: #4af; }
+input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 50%; background: #e8f4ff; border: 2px solid #4af; box-shadow: 0 1px 4px rgba(0,0,0,.6); }
+input[type=range]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px rgba(68,170,255,.35); }
+input[type=range]:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 3px rgba(68,170,255,.35); }
+
+/* selects (arrow drawn with CSS, no images, so page CSP can't block it) */
+.selwrap { position: relative; }
+.selwrap::after {
+    content: ""; position: absolute; right: 11px; top: 50%; width: 6px; height: 6px; pointer-events: none;
+    border-right: 1.5px solid #8a8a94; border-bottom: 1.5px solid #8a8a94; transform: translateY(-70%) rotate(45deg);
+}
+.selwrap select { appearance: none; -webkit-appearance: none; width: 100%; padding-right: 26px; }
+select, input[type=text], input[type=number] {
+    padding: 6px 9px; color: #ddd; background: #0d0d10; border: 1px solid #2f2f38; border-radius: 6px;
+}
+select:focus, input[type=text]:focus, input[type=number]:focus { outline: none; border-color: #4af; }
+input[type=color] { width: 36px; height: 26px; padding: 2px; background: #0d0d10; border: 1px solid #2f2f38; border-radius: 6px; cursor: pointer; }
+
+/* checkboxes as switches */
+.row2 { gap: 8px; margin: 0 0 10px; }
+.row2:last-child { margin-bottom: 0; }
+.row2 label { gap: 9px; cursor: pointer; color: #c8c8d0; }
+input[type=checkbox] {
+    -webkit-appearance: none; appearance: none; position: relative; flex: none; width: 30px; height: 17px; padding: 0;
+    background: #2c2c34; border: none; border-radius: 9px; cursor: pointer; transition: background .15s;
+}
+input[type=checkbox]::after {
+    content: ""; position: absolute; top: 2px; left: 2px; width: 13px; height: 13px; border-radius: 50%;
+    background: #a8a8b2; transition: transform .15s, background .15s;
+}
+input[type=checkbox]:checked { background: #1d5f94; }
+input[type=checkbox]:checked::after { transform: translateX(13px); background: #fff; }
+input[type=checkbox]:focus-visible { outline: 2px solid rgba(68,170,255,.5); outline-offset: 2px; }
+
+/* buttons inside the sidebar */
+.pane button { padding: 6px 12px; color: #ddd; background: #1d1d23; border: 1px solid #2f2f38; border-radius: 6px; transition: background .12s, border-color .12s; }
+.pane button:hover { background: #26262e; border-color: #3a3a46; }
+.pane button.on { background: #123a55; border-color: #2b78b0; color: #fff; }
+.pane button.primary { background: #123a55; border-color: #2b78b0; color: #fff; }
+.pane button.primary:hover { background: #17486b; }
+.seg { gap: 0; flex-wrap: nowrap; }
+.seg button { flex: 1; padding: 6px 4px; border-radius: 0; }
+.seg button:first-child { border-radius: 6px 0 0 6px; }
+.seg button:last-child { border-radius: 0 6px 6px 0; }
+.seg button + button { margin-left: -1px; }
+
+/* text blocks */
+.hint { margin: 0 0 10px; padding: 0 2px; color: #7c7c88; font-size: 11px; line-height: 1.5; }
+.sec .hint { margin-top: 0; }
+.kv { margin: 0 0 6px; padding: 6px 9px; background: #15151a; border-radius: 6px; }
+.pre, .hexpre { margin: 8px 0; background: #0b0b0e; border: 1px solid #25252b; border-radius: 6px; }
+.slist { margin: 8px 0; }
+.sitem { padding: 5px 8px; border: none; border-radius: 5px; }

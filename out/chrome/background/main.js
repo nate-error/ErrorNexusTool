@@ -13,10 +13,28 @@ browserAPI.runtime.onInstalled.addListener((details) => {
 });
 
 // Messages from the content script
-browserAPI.runtime.onMessage.addListener((msg, sender) => {
+browserAPI.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (msg.type === "openOptions") {
         browserAPI.runtime.openOptionsPage();
         return;
+    }
+
+    // "Stop" button in the console
+    if (msg.type === "cancelScan" && sender.tab) {
+        const scan = activeScans.get(sender.tab.id);
+        if (scan) {
+            scan.cancelled = true;
+            activeScans.delete(sender.tab.id);
+            reportProgress(scan, false);
+        }
+        
+        return;
+    }
+
+    // thumbnails / playground ask for the bytes of a found image
+    if (msg.type === "getImage" && sender.tab) {
+        fetchImageData(sender.tab.url, msg.url).then(sendResponse, (e) => sendResponse({ ok: false, error: String(e) }));
+        return true; // async response
     }
 
     if (msg.type === "imageNames" && sender.tab) {

@@ -64,8 +64,10 @@ async function waitForSlot() {
 }
 
 // Push the next request back for everyone (used for 429 and errors)
-function backOff(scan, ms, why) {
+// The tab gets a "throttle" message so the console can show a countdown instead of looking stuck
+function backOff(scan, ms, why, short) {
     nextAllowed = Math.max(nextAllowed, Date.now() + ms);
+    sendToTab(scan.tabId, { type: "throttle", until: nextAllowed, why: short });
     sendLog(scan.tabId, `${why}, pausing ${(ms / 1000).toFixed(1)}s`, "warn");
 }
 
@@ -86,7 +88,9 @@ async function processJob(job) {
         } catch (e) {
             lastErr = e;
             nextAllowed = Date.now() + delayMs;
-            if (attempt < MAX_RETRIES) backOff(scan, BASE_BACKOFF_MS * 2 ** attempt, `Network error on ${job.url}`);
+            if (attempt < MAX_RETRIES)
+                backOff(scan, BASE_BACKOFF_MS * 2 ** attempt, `Network error on ${job.url}`, "network error");
+            
             continue;
         }
 
@@ -97,7 +101,7 @@ async function processJob(job) {
         if ((res.status === 429 || res.status >= 500) && attempt < MAX_RETRIES) {
             const retryAfter = Number(res.headers.get("Retry-After")) * 1000;
             const wait = Math.min(retryAfter || BASE_BACKOFF_MS * 2 ** attempt, MAX_BACKOFF_MS);
-            backOff(scan, wait, `Status ${res.status}`);
+            backOff(scan, wait, `Status ${res.status}`, res.status === 429 ? "rate limited (429)" : `server error (${res.status})`);
             continue;
         }
         break;

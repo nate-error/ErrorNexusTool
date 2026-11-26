@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8" />
@@ -58,14 +58,29 @@
     </div>
 
     <div class="card">
-      <h3>Panel</h3>
+      <h3>Shortcuts</h3>
       <p>
-        Put the floating panel back at its default size and position (bottom
-        right) on open tabs.
+        Click a shortcut, then press the new key combination. Esc cancels
+        recording. Shortcuts are ignored while you type in a text field.
+      </p>
+      <div id="shortcutList"></div>
+
+      <div class="actions">
+        <button id="saveShortcuts">Save Shortcuts</button>
+        <button id="resetShortcuts">Reset to default</button>
+        <div id="statusShortcuts" class="status"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Panels</h3>
+      <p>
+        Put the console and the image list back at their default size and
+        position on open tabs.
       </p>
 
       <div class="actions">
-        <button id="resetPanel">Reset panel position and size</button>
+        <button id="resetPanel">Reset panel positions and sizes</button>
         <div id="statusPanel" class="status"></div>
       </div>
     </div>

@@ -1,7 +1,26 @@
 // registers the content scripts only on sites the user allowed and granted permission for
-const CONTENT_FILES = ["shared/browser.js", "content/panel-style.js", "content/panel.js", "content/main.js"];
+const CONTENT_FILES = [
+    "shared/browser.js",
+    "content/style.js",
+    "content/ui.js",
+    "content/console.js",
+    "content/gallery.js",
+    // playground: pure logic first, then the pieces, then the shell that assembles them
+    "content/playground/pixels.js",
+    "content/playground/bytes.js",
+    "content/playground/controls.js",
+    "content/playground/stage.js",
+    "content/playground/tab-adjust.js",
+    "content/playground/tab-bits.js",
+    "content/playground/tab-colors.js",
+    "content/playground/tab-hex.js",
+    "content/playground/tab-info.js",
+    "content/playground/tab-draw.js",
+    "content/playground/playground.js",
+    "content/shortcuts.js",
+    "content/main.js",
+];
 let firefoxHandle = null;
-console.log("[nexus] register.js loaded");
 
 async function doSync() {
     const { allowedSites } = await storageGet("sync", { allowedSites: DEFAULT_ALLOWED_SITES });
@@ -9,9 +28,9 @@ async function doSync() {
     // only sites the user actually granted permission for
     const granted = [];
     for (const m of allowedSites.map(toMatchPattern).filter(Boolean)) {
-        if (await permissionsContains([m])) granted.push(m);
+        if (await permissionsContains([m]))
+            granted.push(m);
     }
-    console.log("[nexus] allowed:", allowedSites, "granted patterns:", granted);
 
     if (IS_FIREFOX) {
         if (firefoxHandle) {

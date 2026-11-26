@@ -1,136 +1,122 @@
 * {
-box-sizing: border-box;
-margin: 0;
-padding: 0;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
 body {
-font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace,
-    sans-serif;
-background-color: #121214;
-color: #e4e4e7;
-padding: 24px;
-max-width: 460px;
-margin: 0 auto;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace, sans-serif;
+    background-color: #121214;
+    color: #e4e4e7;
+    padding: 24px;
+    max-width: 460px;
+    margin: 0 auto;
 }
 
 .card {
-background-color: #18181b;
-border: 1px solid #27272a;
-border-radius: 8px;
-padding: 20px;
-box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    background-color: #18181b;
+    border: 1px solid #27272a;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 .card + .card {
-margin-top: 16px;
+    margin-top: 16px;
 }
 
 h3 {
-font-size: 16px;
-font-weight: 600;
-margin-bottom: 6px;
-color: #f4f4f5;
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #f4f4f5;
 }
 
 p {
-font-size: 12px;
-color: #a1a1aa;
-margin-bottom: 12px;
-line-height: 1.4;
+    font-size: 12px;
+    color: #a1a1aa;
+    margin-bottom: 12px;
+    line-height: 1.4;
 }
 
 textarea {
-width: 100%;
-height: 140px;
-background-color: #09090b;
-color: #4af;
-border: 1px solid #3f3f46;
-border-radius: 6px;
-padding: 10px;
-font-family: monospace;
-font-size: 12px;
-resize: vertical;
-outline: none;
-transition: border-color 0.2s;
+    width: 100%;
+    height: 140px;
+    background-color: #09090b;
+    color: #4af;
+    border: 1px solid #3f3f46;
+    border-radius: 6px;
+    padding: 10px;
+    font-family: monospace;
+    font-size: 12px;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.2s;
 }
 
 textarea:focus {
-border-color: #4af;
+    border-color: #4af;
 }
 
 .actions {
-display: flex;
-align-items: center;
-gap: 8px;
-margin-top: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
 }
 
 button {
-background-color: #27272a;
-color: #ffffff;
-border: 1px solid #3f3f46;
-padding: 7px 14px;
-font-size: 12px;
-font-weight: 500;
-border-radius: 6px;
-cursor: pointer;
-transition:
-    background-color 0.2s,
-    border-color 0.2s;
+    background-color: #27272a;
+    color: #ffffff;
+    border: 1px solid #3f3f46;
+    padding: 7px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
 }
 
 button:hover {
-background-color: #3f3f46;
+    background-color: #3f3f46;
 }
 
 input[type="number"] {
-width: 120px;
-background-color: #09090b;
-color: #4af;
-border: 1px solid #3f3f46;
-border-radius: 6px;
-padding: 8px 10px;
-font-family: monospace;
-font-size: 12px;
-outline: none;
+    width: 120px;
+    background-color: #09090b;
+    color: #4af;
+    border: 1px solid #3f3f46;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-family: monospace;
+    font-size: 12px;
+    outline: none;
 }
 
 input[type="number"]:focus {
-border-color: #4af;
+    border-color: #4af;
 }
 
-.statusrow {
-    flex: none;
+.sc-row {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 4px 10px;
-    color: #aaa;
-    border-bottom: 1px solid #222;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 5px 0;
+    border-bottom: 1px solid #27272a;
+    font-size: 12px;
 }
-.spinner {
-    flex: none;
-    width: 10px;
-    height: 10px;
-    border: 2px solid #555;
-    border-top-color: #4af;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-}
-.spinner.off {
-    display: none;
-}
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
+
+.kbd {
+    min-width: 110px;
+    font-family: monospace;
+    color: #4af;
+    padding: 5px 10px;
 }
 
 .status {
-margin-left: auto;
-font-size: 12px;
-color: #4ade80;
-font-weight: 500;
+    margin-left: auto;
+    font-size: 12px;
+    color: #4ade80;
+    font-weight: 500;
 }

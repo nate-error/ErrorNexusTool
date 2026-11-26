@@ -23,13 +23,53 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // variant extensions: user list if it exists, bundled file otherwise
     const { extensions } = await storageGet("local", { extensions: null });
-    $("extensions").value = (Array.isArray(extensions) ? extensions : await loadBundledExtensions()).join(
-        "\n",
-    );
+    $("extensions").value = (Array.isArray(extensions) ? extensions : await loadBundledExtensions()).join("\n");
 
     // delay between requests
     const { requestDelay } = await storageGet("local", { requestDelay: DEFAULT_DELAY_MS });
     $("delay").value = requestDelay;
+
+    // shortcuts
+    const { shortcuts } = await storageGet("sync", { shortcuts: {} });
+    let combos = { ...DEFAULT_SHORTCUTS, ...shortcuts };
+
+    function renderShortcuts() {
+        const box = $("shortcutList");
+        box.replaceChildren();
+        for (const [id, def] of Object.entries(SHORTCUT_ACTIONS)) {
+            const row = document.createElement("div");
+            row.className = "sc-row";
+            const label = document.createElement("span");
+            label.textContent = def.label;
+            const btn = document.createElement("button");
+            btn.className = "kbd";
+            btn.textContent = prettyCombo(combos[id]);
+            btn.addEventListener("click", () => record(id, btn));
+            row.append(label, btn);
+            box.append(row);
+        }
+    }
+
+    function record(id, btn) {
+        btn.textContent = "Press keys\u2026";
+        const finish = () => {
+            window.removeEventListener("keydown", onKey, true);
+            renderShortcuts();
+        };
+        const onKey = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (e.key === "Escape") return finish();
+            const combo = comboFromEvent(e);
+            if (!combo) return; // modifier only: keep waiting
+            const clash = Object.keys(combos).find((k) => k !== id && combos[k] === combo);
+            if (clash) flash($("statusShortcuts"), `Already used by "${SHORTCUT_ACTIONS[clash].label}"`);
+            else combos[id] = combo;
+            finish();
+        };
+        window.addEventListener("keydown", onKey, true);
+    }
+    renderShortcuts();
 
     // save handling
     $("saveSites").addEventListener("click", async () => {
@@ -47,7 +87,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         await storageSet("sync", { allowedSites: sites });
         flash($("statusSites"), ok ? "Settings saved!" : "Saved, but access was denied");
     });
-    
+
     $("saveDelay").addEventListener("click", async () => {
         const n = Math.round(Number($("delay").value));
         const value = Number.isFinite(n) && n >= 0 ? Math.min(n, MAX_DELAY_MS) : DEFAULT_DELAY_MS;
@@ -63,10 +103,15 @@ document.addEventListener("DOMContentLoaded", async () => {
         flash($("statusExtensions"), "Extensions saved!");
     });
 
+    $("saveShortcuts").addEventListener("click", async () => {
+        await storageSet("sync", { shortcuts: combos });
+        flash($("statusShortcuts"), "Shortcuts saved!");
+    });
+
     // reset handling
     $("resetPanel").addEventListener("click", async () => {
-        await storageRemove("local", "panelState");
-        flash($("statusPanel"), "Panel reset!");
+        await storageRemove("local", ["galleryState", "consoleState"]);
+        flash($("statusPanel"), "Panels reset!");
     });
 
     $("resetExtensions").addEventListener("click", async () => {
@@ -75,10 +120,16 @@ document.addEventListener("DOMContentLoaded", async () => {
         flash($("statusExtensions"), "Reset to default!");
     });
 
-        $("resetDelay").addEventListener("click", async () => {
+    $("resetDelay").addEventListener("click", async () => {
         await storageRemove("local", "requestDelay");
         $("delay").value = DEFAULT_DELAY_MS;
         flash($("statusDelay"), "Reset to default!");
     });
 
+    $("resetShortcuts").addEventListener("click", async () => {
+        await storageRemove("sync", "shortcuts");
+        combos = { ...DEFAULT_SHORTCUTS };
+        renderShortcuts();
+        flash($("statusShortcuts"), "Reset to default!");
+    });
 });
