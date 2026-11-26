@@ -51,7 +51,9 @@ Both windows feature interactive menus and dedicated keyboard shortcuts, which c
 
 Click on any image thumbnail in the Found Images window to open the Image Playground.
 
-The playground provides a collection of image editing tools, heavily inspired by [Riddlimg](https://github.com/), with additional features and improvements.
+The playground provides a collection of image editing tools, heavily inspired by [Riddlimg](https://github.com/liwingyankobe/riddlimg), with additional features.
+
+Clicking on a side (anywhere outside the window closes the playground).
 
 ### Image Scanning & Minifuzzer
 

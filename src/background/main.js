@@ -47,3 +47,10 @@ browserAPI.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         });
     }
 });
+
+// Open extension options page
+browserAPI.runtime.onMessage.addListener((message) => {
+    if (message?.type === "OPEN_OPTIONS") {
+        browserAPI.runtime.openOptionsPage();
+    }
+});

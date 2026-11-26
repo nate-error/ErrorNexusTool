@@ -29,7 +29,20 @@ function createConsole(saved, onSave) {
     const toggleNF = el("button"); // always visible, so hidden 404s are never a mystery
     const clearBtn = el("button", "only-open", "Clear");
     const bar = el("div", "cbar");
-    bar.append(chev, el("span", "ctitle", "Console"), progress, statusText, stopBtn, toggleNF, clearBtn);
+
+    // Open options
+    const optionsBtn = el("button", "options-btn", "⚙");
+    optionsBtn.title = "Open options";
+    optionsBtn.setAttribute("aria-label", "Open options");
+    optionsBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+
+        browserAPI.runtime.sendMessage({
+            type: "OPEN_OPTIONS"
+        });
+    });
+    
+    bar.append(chev, el("span", "ctitle", "Console"), progress, statusText, stopBtn, toggleNF, clearBtn, optionsBtn);
 
     const box = el("div", "console hide-notfound");
     box.append(grip, body, bar);
