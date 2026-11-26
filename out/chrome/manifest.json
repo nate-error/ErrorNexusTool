@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Error Nexus Tools",
-  "version": "1.7",
+  "version": "1.8",
   "description": "Scan images, check URLs, extract EXIF and EOF metadata directly on webpages.",
 
   "permissions": [
